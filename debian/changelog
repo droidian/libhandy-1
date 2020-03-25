@@ -1,3 +1,12 @@
+libhandy (0.0.13-2) unstable; urgency=medium
+
+  * [0fd724f] Disable atk during tests.
+    This fixes test problems on GNU Hurd.
+    Thanks to Samuel Thibault for investigating
+    (Closes: #953971)
+
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 25 Mar 2020 10:14:43 +0100
+
 libhandy (0.0.13-1) unstable; urgency=medium
 
   [ Guido Günther ]
