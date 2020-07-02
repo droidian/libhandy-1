@@ -8,7 +8,6 @@
 #include "config.h"
 #include <glib/gi18n-lib.h>
 
-#include "hdy-style-private.h"
 #include "hdy-view-switcher-button-private.h"
 
 /**
@@ -250,10 +249,10 @@ hdy_view_switcher_button_class_init (HdyViewSwitcherButtonClass *klass)
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 
-  /* We probably should set the class's CSS name to "hdyviewswitcherbutton"
+  /* We probably should set the class's CSS name to "viewswitcherbutton"
    * here, but it doesn't work because GtkCheckButton hardcodes it to "button"
-   * on instanciation, and the functions required to override it are private.
-   * In the meantime, we can use the "hdyviewswitcher > button" CSS selector as
+   * on instantiation, and the functions required to override it are private.
+   * In the meantime, we can use the "viewswitcher > button" CSS selector as
    * a fairly safe fallback.
    */
 
@@ -277,47 +276,11 @@ static void
 hdy_view_switcher_button_init (HdyViewSwitcherButton *self)
 {
   HdyViewSwitcherButtonPrivate *priv;
-  g_autoptr (GtkCssProvider) provider = gtk_css_provider_new ();
 
   priv = hdy_view_switcher_button_get_instance_private (self);
   priv->icon_size = GTK_ICON_SIZE_BUTTON;
 
   gtk_widget_init_template (GTK_WIDGET (self));
-
-  gtk_css_provider_load_from_resource (provider, "/sm/puri/handy/style/hdy-view-switcher-button.css");
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (self)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->horizontal_box)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->horizontal_image)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->horizontal_label_active)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->horizontal_label_inactive)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->horizontal_label_stack)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->vertical_box)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->vertical_image)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->vertical_label_active)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->vertical_label_inactive)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (GTK_WIDGET (priv->vertical_label_stack)),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
 
   gtk_stack_set_visible_child (GTK_STACK (priv->stack), GTK_WIDGET (priv->horizontal_box));
 
@@ -337,7 +300,7 @@ hdy_view_switcher_button_init (HdyViewSwitcherButton *self)
  *
  * Since: 0.0.10
  */
-HdyViewSwitcherButton *
+GtkWidget *
 hdy_view_switcher_button_new (void)
 {
   return g_object_new (HDY_TYPE_VIEW_SWITCHER_BUTTON, NULL);

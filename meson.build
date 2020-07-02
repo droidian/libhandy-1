@@ -1,5 +1,5 @@
 project('libhandy', 'c',
-          version: '0.0.13',
+          version: '0.83.0',
           license: 'LGPL-2.1+',
     meson_version: '>= 0.49.0',
   default_options: [ 'warning_level=1', 'buildtype=debugoptimized', 'c_std=gnu11' ],
@@ -10,7 +10,9 @@ handy_version_major = version_arr[0].to_int()
 handy_version_minor = version_arr[1].to_int()
 handy_version_micro = version_arr[2].to_int()
 
-apiversion = '0.0'
+# The major api version as encoded in the libraries name
+apiversion = '1'
+# The so major version of the library
 soversion = 0
 package_api_name = '@0@-@1@'.format(meson.project_name(), apiversion)
 
@@ -120,22 +122,12 @@ else
   vapidir = get_option('datadir') / 'vala' / 'vapi'
 endif
 
-static = get_option('static')
-
-installable = not (static and meson.is_subproject())
-
 glade_catalog_feature = get_option('glade_catalog')
-if static and glade_catalog_feature.enabled()
-  error('The Glade Catalog isn’t available for static libhandy.')
-endif
 gladeui_dep = dependency('gladeui-2.0', required : glade_catalog_feature)
-glade_catalog = gladeui_dep.found() and not static
+glade_catalog = not glade_catalog_feature.disabled() and gladeui_dep.found()
 
 introspection_feature = get_option('introspection')
-if static and introspection_feature.enabled()
-  error('Introspection isn’t available for static libhandy.')
-endif
-introspection = introspection_feature.enabled() or (introspection_feature.auto() and not static)
+introspection = introspection_feature.enabled() or introspection_feature.auto()
 
 gnome = import('gnome')
 
@@ -162,7 +154,6 @@ summary = [
   '             Tests: @0@'.format(get_option('tests')),
   '          Examples: @0@'.format(get_option('examples')),
   '     Documentation: @0@'.format(get_option('gtk_doc')),
-  '            Static: @0@'.format(static),
   '     Introspection: @0@'.format(introspection),
   '              Vapi: @0@'.format(get_option('vapi')),
   '     Glade Catalog: @0@'.format(glade_catalog),

@@ -1,6 +1,6 @@
 # Handy
-[![Pipeline status](https://source.puri.sm/Librem5/libhandy/badges/master/build.svg)](https://source.puri.sm/Librem5/libhandy/commits/master)
-[![Code coverage](https://source.puri.sm/Librem5/libhandy/badges/master/coverage.svg)](https://source.puri.sm/Librem5/libhandy/commits/master)
+[![Pipeline status](https://gitlab.gnome.org/GNOME/libhandy/badges/master/build.svg)](https://gitlab.gnome.org/GNOME/libhandy/commits/master)
+[![Code coverage](https://gitlab.gnome.org/GNOME/libhandy/badges/master/coverage.svg)](https://gitlab.gnome.org/GNOME/libhandy/commits/master)
 
 The aim of the Handy library is to help with developing UI for mobile devices
 using GTK/GNOME.
@@ -11,7 +11,7 @@ libhandy is licensed under the LGPL-2.1+.
 
 ## Build dependencies
 
-To build libhandy you need to first install the build-deps defined by [the debian/control file](https://source.puri.sm/Librem5/libhandy/blob/master/debian/control#L6).
+To build libhandy you need to first install the build-deps defined by [the debian/control file](https://gitlab.gnome.org/GNOME/libhandy/blob/master/debian/control#L6).
 
 If you are running a Debian based distribution, you can easily install all those the dependencies making use of the following command
 
@@ -64,26 +64,4 @@ _build/run glade
 ## Documentation
 
 The documentation can be found online
-[here](https://developer.puri.sm/projects/libhandy/unstable). Further examples on how
-to use the widgets in your favorite programming language can be found here:
-
-### C
-- [calls](https://source.puri.sm/Librem5/calls) (HdyDialer)
-- [gnome-bluetooth](https://gitlab.gnome.org/GNOME/gnome-bluetooth) (HdyColumn)
-- [GNOME Settings](https://gitlab.gnome.org/GNOME/gnome-control-center) (HdyActionRow, HdyColumn, HdyLeaflet, HdyTitleBar)
-- [GNOME Web](https://gitlab.gnome.org/GNOME/epiphany) (HdyActionRow, HdyColumn, HdyComboRow, HdySearchBar)
-- [phosh](https://source.puri.sm/Librem5/phosh) (HdyDialer)
-
-### Python 3
-- [Daty](https://gitlab.gnome.org/World/Daty) (HdyColumn, HdyLeaflet, HdySearchBar, HdyTitleBar)
-- [HydraPaper](https://gabmus.gitlab.io/HydraPaper/) (HdyActionRow, HdyHeaderBar, HdyPreferencesGroup, HdyPreferencesPage, HdyPreferencesRow, HdyPreferencesWindow, HdyViewSwitcher)
-- [PasswordSafe](https://gitlab.gnome.org/World/PasswordSafe) (HdyColumn)
-- [Unifydmin](https://gitlab.com/gabmus/unifydmin) (HdyColumn, HdyLeaflet, HdyTitleBar)
-
-### Rust
-- [Fractal](https://gitlab.gnome.org/GNOME/fractal) (HdyColumn, HdyLeaflet)
-- [Podcasts](https://gitlab.gnome.org/World/podcasts) (HdyColumn)
-
-### Vala
-- [GNOME Contacts](https://gitlab.gnome.org/GNOME/gnome-contacts) (HdyLeaflet, HdyHeaderGroup, HdyTitleBar)
-- [GNOME Games](https://gitlab.gnome.org/GNOME/gnome-games) (HdyColumn, HdyTitleBar)
+[here](https://gnome.pages.gitlab.gnome.org/libhandy).

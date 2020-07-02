@@ -5,10 +5,27 @@
  - [ ] build system
  - [ ] documentation
  - [ ] example application
- - [ ] HdyArrows
- - [ ] HdyColumn
- - [ ] HdyDialer
+ - [ ] HdyActionRow
+ - [ ] HdyCarousel
+ - [ ] HdyClamp
+ - [ ] HdyComboRow
+ - [ ] HdyEnumValueObject
+ - [ ] HdyExpanderRow
+ - [ ] HdyHeaderBar
+ - [ ] HdyKeypad
  - [ ] HdyLeaflet
+ - [ ] HdyPreferencesGroup
+ - [ ] HdyPreferencesPage
+ - [ ] HdyPreferencesRow
+ - [ ] HdyPreferencesWindow
+ - [ ] HdySearchBar
+ - [ ] HdySqueezer
+ - [ ] HdySwipeable
+ - [ ] HdySwipeGroup
+ - [ ] HdyTitleBar
+ - [ ] HdyValueObject
+ - [ ] HdyViewSwitcher
+ - [ ] HdyViewSwitcherBar
  - [ ] somewhere else (please elaborate)
 
 ## What is the actual behaviour?
@@ -31,11 +48,11 @@
 
 ```
 $ dpkg -l | grep libhandy
-ii  gir1.2-handy-0.0:amd64                0.0.3~203.gbp18952a                     amd64        GObject introspection files for libhandy
-ii  libhandy-0.0-0:amd64                  0.0.3~203.gbp18952a                     amd64        Library with GTK widgets for mobile phones
-ii  libhandy-0.0-dev:amd64                0.0.3~203.gbp18952a                     amd64        Development files for libhandy
+ii  gir1.2-handy-1:amd64                1.0.0~203.gbp18952a                     amd64        GObject introspection files for libhandy
+ii  libhandy-1-0:amd64                  1.0.0~203.gbp18952a                     amd64        Library with GTK+ widgets for mobile phones
+ii  libhandy-1-dev:amd64                1.0.0~203.gbp18952a                     amd64        Development files for libhandy
 
-$ dpkg -s libhandy-0.0-0
+$ dpkg -s libhandy-1-0
 ```
 
 # What hardware are you running libhandy on?
@@ -44,7 +61,7 @@ $ dpkg -s libhandy-0.0-0
  - [ ] Librem5 devkit
  - [ ] other (please elaborate)
 
-# Releveant logfiles
+# Relevant logfiles
 
   Please provide relevant logs with ``G_MESSAGES_DEBUG=all <yourappliation>``
 

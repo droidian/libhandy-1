@@ -7,7 +7,6 @@
 #include "config.h"
 #include <glib/gi18n-lib.h>
 
-#include "hdy-style-private.h"
 #include "hdy-keypad.h"
 #include "hdy-keypad-button-private.h"
 
@@ -21,22 +20,31 @@
  *
  * This widget should not be altered using the #GtkGrid and #GtkContainer APIs,
  * they are considered internal to this widget, using them externally will lead to unexpected results.
+ *
+ * # CSS nodes
+ *
+ * #HdyKeypad has a single CSS node with name keypad.
  */
 
 typedef struct
 {
   GtkWidget *entry;
+  GtkWidget *grid;
   GtkWidget *label_asterisk;
   GtkWidget *label_hash;
   GtkGesture *long_press_zero_gesture;
+  guint16 row_spacing;
+  guint16 column_spacing;
   gboolean only_digits;
   gboolean show_symbols;
 } HdyKeypadPrivate;
 
-G_DEFINE_TYPE_WITH_PRIVATE (HdyKeypad, hdy_keypad, GTK_TYPE_GRID)
+G_DEFINE_TYPE_WITH_PRIVATE (HdyKeypad, hdy_keypad, GTK_TYPE_BIN)
 
 enum {
   PROP_0,
+  PROP_ROW_SPACING,
+  PROP_COLUMN_SPACING,
   PROP_SHOW_SYMBOLS,
   PROP_ONLY_DIGITS,
   PROP_ENTRY,
@@ -47,15 +55,19 @@ enum {
 static GParamSpec *props[PROP_LAST_PROP];
 
 static void
-symbol_clicked (HdyKeypad     *self,
-                gchar          symbol)
+symbol_clicked (HdyKeypad *self,
+                gchar      symbol)
 {
   HdyKeypadPrivate *priv;
   g_autofree gchar *string = g_strdup_printf ("%c", symbol);
+
   g_return_if_fail (HDY_IS_KEYPAD (self));
+
   priv = hdy_keypad_get_instance_private (self);
+
   g_return_if_fail (priv->entry != NULL);
-  g_signal_emit_by_name(GTK_ENTRY (priv->entry), "insert-at-cursor", string, NULL);
+
+  g_signal_emit_by_name (GTK_ENTRY (priv->entry), "insert-at-cursor", string, NULL);
   /* Set focus to the entry only when it can get focus
    * https://gitlab.gnome.org/GNOME/gtk/issues/2204
    */
@@ -67,7 +79,7 @@ symbol_clicked (HdyKeypad     *self,
 
 static void
 button_clicked_cb (HdyKeypad       *self,
-                      HdyKeypadButton *btn)
+                   HdyKeypadButton *btn)
 {
   gchar digit;
 
@@ -103,23 +115,23 @@ hash_button_clicked_cb (HdyKeypad *self,
 
 
 static void
-insert_text_cb (HdyKeypad *self,
-               gchar       *text,
-               gint         length,
-               gpointer     position,
-               GtkEditable  *editable)
+insert_text_cb (HdyKeypad   *self,
+                gchar       *text,
+                gint         length,
+                gpointer     position,
+                GtkEditable *editable)
 {
   HdyKeypadPrivate *priv;
 
   g_return_if_fail (HDY_IS_KEYPAD (self));
-  priv = hdy_keypad_get_instance_private (self);
-
   g_return_if_fail (length == 1);
+
+  priv = hdy_keypad_get_instance_private (self);
 
   if (g_ascii_isdigit (*text))
      return;
 
-  if (!priv->only_digits && strchr("#*+", *text))
+  if (!priv->only_digits && strchr ("#*+", *text))
      return;
 
   g_signal_stop_emission_by_name (editable, "insert-text");
@@ -135,6 +147,7 @@ long_press_zero_cb (HdyKeypad  *self,
   HdyKeypadPrivate *priv;
 
   g_return_if_fail (HDY_IS_KEYPAD (self));
+
   priv = hdy_keypad_get_instance_private (self);
 
   if (priv->only_digits)
@@ -156,10 +169,17 @@ hdy_keypad_set_property (GObject      *object,
   HdyKeypadPrivate *priv = hdy_keypad_get_instance_private (self);
 
   switch (property_id) {
+  case PROP_ROW_SPACING:
+    hdy_keypad_set_row_spacing (self, g_value_get_uint (value));
+    break;
+
+  case PROP_COLUMN_SPACING:
+    hdy_keypad_set_column_spacing (self, g_value_get_uint (value));
+    break;
+
   case PROP_SHOW_SYMBOLS:
     hdy_keypad_show_symbols (self, g_value_get_boolean (value));
     break;
-
   case PROP_ONLY_DIGITS:
     if (g_value_get_boolean (value) != priv->only_digits) {
       priv->only_digits = g_value_get_boolean (value);
@@ -169,15 +189,12 @@ hdy_keypad_set_property (GObject      *object,
   case PROP_ENTRY:
     hdy_keypad_set_entry (self, g_value_get_object (value));
     break;
-
   case PROP_RIGHT_ACTION:
     hdy_keypad_set_right_action (self, g_value_get_object (value));
     break;
-
   case PROP_LEFT_ACTION:
     hdy_keypad_set_left_action (self, g_value_get_object (value));
     break;
-
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     break;
@@ -195,41 +212,27 @@ hdy_keypad_get_property (GObject    *object,
   HdyKeypadPrivate *priv = hdy_keypad_get_instance_private (self);
 
   switch (property_id) {
+  case PROP_ROW_SPACING:
+    g_value_set_uint (value, priv->row_spacing);
+    break;
+
+  case PROP_COLUMN_SPACING:
+    g_value_set_uint (value, priv->column_spacing);
+    break;
+
   case PROP_SHOW_SYMBOLS:
     g_value_set_boolean (value, priv->show_symbols);
     break;
-
   case PROP_ONLY_DIGITS:
     g_value_set_boolean (value, priv->only_digits);
     break;
-
   case PROP_ENTRY:
     g_value_set_object (value, priv->entry);
     break;
-
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
     break;
   }
-}
-
-
-static void
-hdy_keypad_constructed (GObject *object)
-{
-  HdyKeypadPrivate *priv = hdy_keypad_get_instance_private (HDY_KEYPAD (object));
-  g_autoptr (GtkCssProvider) provider = NULL;
-
-  G_OBJECT_CLASS (hdy_keypad_parent_class)->constructed (object);
-
-  provider = gtk_css_provider_new ();
-  gtk_css_provider_load_from_resource (provider, "/sm/puri/handy/style/hdy-keypad-symbol.css");
-  gtk_style_context_add_provider (gtk_widget_get_style_context (priv->label_asterisk),
-                                GTK_STYLE_PROVIDER (provider),
-                                HDY_STYLE_PROVIDER_PRIORITY);
-  gtk_style_context_add_provider (gtk_widget_get_style_context (priv->label_hash),
-                                GTK_STYLE_PROVIDER (provider),
-                                HDY_STYLE_PROVIDER_PRIORITY);
 }
 
 
@@ -252,10 +255,23 @@ hdy_keypad_class_init (HdyKeypadClass *klass)
   GtkWidgetClass *widget_class = GTK_WIDGET_CLASS (klass);
 
   object_class->finalize = hdy_keypad_finalize;
-  object_class->constructed = hdy_keypad_constructed;
 
   object_class->set_property = hdy_keypad_set_property;
   object_class->get_property = hdy_keypad_get_property;
+
+  props[PROP_ROW_SPACING] =
+    g_param_spec_uint ("row-spacing",
+                       _("Row spacing"),
+                       _("The amount of space between two consecutive rows"),
+                       0, G_MAXINT16, 0,
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
+
+  props[PROP_COLUMN_SPACING] =
+    g_param_spec_uint ("column-spacing",
+                       _("Column spacing"),
+                       _("The amount of space between two consecutive columns"),
+                       0, G_MAXINT16, 0,
+                       G_PARAM_READWRITE | G_PARAM_EXPLICIT_NOTIFY);
 
   props[PROP_SHOW_SYMBOLS] =
     g_param_spec_boolean ("show-symbols",
@@ -296,17 +312,18 @@ hdy_keypad_class_init (HdyKeypadClass *klass)
 
   gtk_widget_class_set_template_from_resource (widget_class,
                                                "/sm/puri/handy/ui/hdy-keypad.ui");
+  gtk_widget_class_bind_template_child_private (widget_class, HdyKeypad, grid);
   gtk_widget_class_bind_template_child_private (widget_class, HdyKeypad, label_asterisk);
   gtk_widget_class_bind_template_child_private (widget_class, HdyKeypad, label_hash);
   gtk_widget_class_bind_template_child_private (widget_class, HdyKeypad, long_press_zero_gesture);
 
-  gtk_widget_class_bind_template_callback(widget_class, button_clicked_cb);
-  gtk_widget_class_bind_template_callback(widget_class, asterisk_button_clicked_cb);
-  gtk_widget_class_bind_template_callback(widget_class, hash_button_clicked_cb);
-  gtk_widget_class_bind_template_callback(widget_class, long_press_zero_cb);
+  gtk_widget_class_bind_template_callback (widget_class, button_clicked_cb);
+  gtk_widget_class_bind_template_callback (widget_class, asterisk_button_clicked_cb);
+  gtk_widget_class_bind_template_callback (widget_class, hash_button_clicked_cb);
+  gtk_widget_class_bind_template_callback (widget_class, long_press_zero_cb);
 
   gtk_widget_class_set_accessible_role (widget_class, ATK_ROLE_DIAL);
-  gtk_widget_class_set_css_name (widget_class, "hdykeypad");
+  gtk_widget_class_set_css_name (widget_class, "keypad");
 }
 
 
@@ -327,12 +344,109 @@ hdy_keypad_init (HdyKeypad *self)
  * Returns: the newly created #HdyKeypad widget
  *
  */
-GtkWidget *hdy_keypad_new (gboolean only_digits, gboolean show_symbols)
+GtkWidget *
+hdy_keypad_new (gboolean only_digits,
+                gboolean show_symbols)
 {
   return g_object_new (HDY_TYPE_KEYPAD,
                        "only-digits", only_digits,
                        "show-symbols", show_symbols,
                        NULL);
+}
+
+/**
+ * hdy_keypad_set_row_spacing:
+ * @self: a #HdyKeypad
+ * @spacing: the amount of space to insert between rows
+ *
+ * Sets the amount of space between rows of @self.
+ */
+void
+hdy_keypad_set_row_spacing (HdyKeypad *self,
+                            guint      spacing)
+{
+  HdyKeypadPrivate *priv;
+
+  g_return_if_fail (HDY_IS_KEYPAD (self));
+  g_return_if_fail (spacing <= G_MAXINT16);
+
+  priv = hdy_keypad_get_instance_private (self);
+
+  if (priv->row_spacing == spacing)
+    return;
+
+  priv->row_spacing = spacing;
+
+  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_ROW_SPACING]);
+}
+
+
+/**
+ * hdy_keypad_get_row_spacing:
+ * @self: a #HdyKeypad
+ *
+ * Returns the amount of space between the rows of @self.
+ *
+ * Returns: the row spacing of @self
+ */
+guint
+hdy_keypad_get_row_spacing (HdyKeypad *self)
+{
+  HdyKeypadPrivate *priv;
+
+  g_return_val_if_fail (HDY_IS_KEYPAD (self), 0);
+
+  priv = hdy_keypad_get_instance_private (self);
+
+  return priv->row_spacing;
+}
+
+
+/**
+ * hdy_keypad_set_column_spacing:
+ * @self: a #HdyKeypad
+ * @spacing: the amount of space to insert between columns
+ *
+ * Sets the amount of space between columns of @self.
+ */
+void
+hdy_keypad_set_column_spacing (HdyKeypad *self,
+                               guint      spacing)
+{
+  HdyKeypadPrivate *priv;
+
+  g_return_if_fail (HDY_IS_KEYPAD (self));
+  g_return_if_fail (spacing <= G_MAXINT16);
+
+  priv = hdy_keypad_get_instance_private (self);
+
+  if (priv->column_spacing == spacing)
+    return;
+
+  priv->column_spacing = spacing;
+
+  g_object_notify_by_pspec (G_OBJECT (self), props[PROP_COLUMN_SPACING]);
+}
+
+
+/**
+ * hdy_keypad_get_column_spacing:
+ * @self: a #HdyKeypad
+ *
+ * Returns the amount of space between the columns of @self.
+ *
+ * Returns: the column spacing of @self
+ */
+guint
+hdy_keypad_get_column_spacing (HdyKeypad *self)
+{
+  HdyKeypadPrivate *priv;
+
+  g_return_val_if_fail (HDY_IS_KEYPAD (self), 0);
+
+  priv = hdy_keypad_get_instance_private (self);
+
+  return priv->column_spacing;
 }
 
 
@@ -345,9 +459,10 @@ GtkWidget *hdy_keypad_new (gboolean only_digits, gboolean show_symbols)
  *
  */
 void
-hdy_keypad_show_symbols (HdyKeypad *self, gboolean visible)
+hdy_keypad_show_symbols (HdyKeypad *self,
+                         gboolean   visible)
 {
-  HdyKeypadPrivate *priv = hdy_keypad_get_instance_private(self);
+  HdyKeypadPrivate *priv = hdy_keypad_get_instance_private (self);
 
   g_return_if_fail (HDY_IS_KEYPAD (self));
 
@@ -370,14 +485,16 @@ hdy_keypad_show_symbols (HdyKeypad *self, gboolean visible)
  *
  */
 void
-hdy_keypad_set_entry (HdyKeypad *self, GtkEntry *entry)
+hdy_keypad_set_entry (HdyKeypad *self,
+                      GtkEntry  *entry)
 {
   HdyKeypadPrivate *priv;
 
   g_return_if_fail (HDY_IS_KEYPAD (self));
   g_return_if_fail (GTK_IS_ENTRY (entry));
 
-  priv = hdy_keypad_get_instance_private(self);
+  priv = hdy_keypad_get_instance_private (self);
+
   if (priv->entry != NULL) {
     g_object_unref (priv->entry);
   }
@@ -419,7 +536,7 @@ hdy_keypad_get_entry (HdyKeypad *self)
 
   g_return_val_if_fail (HDY_IS_KEYPAD (self), NULL);
 
-  priv = hdy_keypad_get_instance_private(self);
+  priv = hdy_keypad_get_instance_private (self);
 
   return priv->entry;
 }
@@ -434,21 +551,26 @@ hdy_keypad_get_entry (HdyKeypad *self)
  *
  */
 void
-hdy_keypad_set_left_action (HdyKeypad *self, GtkWidget *widget)
+hdy_keypad_set_left_action (HdyKeypad *self,
+                            GtkWidget *widget)
 {
+  HdyKeypadPrivate *priv;
   GtkWidget *old_widget;
+
   g_return_if_fail (HDY_IS_KEYPAD (self));
 
-  old_widget = gtk_grid_get_child_at (GTK_GRID (self), 0, 3);
+  priv = hdy_keypad_get_instance_private (self);
+
+  old_widget = gtk_grid_get_child_at (GTK_GRID (priv->grid), 0, 3);
 
   if (old_widget == widget)
     return;
 
   if (old_widget != NULL)
-    gtk_container_remove (GTK_CONTAINER (self), old_widget);
+    gtk_container_remove (GTK_CONTAINER (priv->grid), old_widget);
 
   if (widget != NULL)
-    gtk_grid_attach (GTK_GRID (self), widget, 0, 3, 1, 1);
+    gtk_grid_attach (GTK_GRID (priv->grid), widget, 0, 3, 1, 1);
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_LEFT_ACTION]);
 }
@@ -463,21 +585,26 @@ hdy_keypad_set_left_action (HdyKeypad *self, GtkWidget *widget)
  *
  */
 void
-hdy_keypad_set_right_action (HdyKeypad *self, GtkWidget *widget)
+hdy_keypad_set_right_action (HdyKeypad *self,
+                             GtkWidget *widget)
 {
+  HdyKeypadPrivate *priv;
   GtkWidget *old_widget;
+
   g_return_if_fail (HDY_IS_KEYPAD (self));
 
-  old_widget = gtk_grid_get_child_at (GTK_GRID (self), 2, 3);
+  priv = hdy_keypad_get_instance_private (self);
+
+  old_widget = gtk_grid_get_child_at (GTK_GRID (priv->grid), 2, 3);
 
   if (old_widget == widget)
     return;
 
   if (old_widget != NULL)
-    gtk_container_remove (GTK_CONTAINER (self), old_widget);
+    gtk_container_remove (GTK_CONTAINER (priv->grid), old_widget);
 
   if (widget != NULL)
-    gtk_grid_attach (GTK_GRID (self), widget, 2, 3, 1, 1);
+    gtk_grid_attach (GTK_GRID (priv->grid), widget, 2, 3, 1, 1);
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_RIGHT_ACTION]);
 }

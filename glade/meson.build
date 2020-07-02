@@ -1,26 +1,24 @@
 if glade_catalog
 
-# This is needed to work around this issue in Glade:
-# https://gitlab.gnome.org/GNOME/glade/issues/379
-is_flatpak_app = get_option('prefix') == '/app'
-
 glade_xml          = 'libhandy.xml'
-if (is_flatpak_app)
-  module_dir       = libdir / 'glade' / 'modules'
-else
-  module_dir       = gladeui_dep.get_pkgconfig_variable('moduledir')
-endif
+module_dir         = gladeui_dep.get_pkgconfig_variable('moduledir',
+                                                        define_variable: ['libdir', get_option('libdir')])
 dtd                = meson.current_source_dir() / 'glade-catalog.dtd'
-if (is_flatpak_app)
-  glade_catalogdir = datadir / 'glade' / 'catalogs'
-else
-  glade_catalogdir = gladeui_dep.get_pkgconfig_variable('catalogdir')
-endif
+glade_catalogdir   = gladeui_dep.get_pkgconfig_variable('catalogdir',
+                                                        define_variable: ['datadir', get_option('datadir')])
 
 libglade_hdy_sources = [
+  'glade-hdy-carousel.c',
+  'glade-hdy-expander-row.c',
+  'glade-hdy-header-bar.c',
   'glade-hdy-header-group.c',
-  'glade-hdy-paginator.c',
+  'glade-hdy-leaflet.c',
+  'glade-hdy-preferences-page.c',
+  'glade-hdy-preferences-window.c',
+  'glade-hdy-search-bar.c',
   'glade-hdy-swipe-group.c',
+  'glade-hdy-window.c',
+  'glade-hdy-utils.c',
 ]
 
 libglade_hdy_deps = [
@@ -31,12 +29,12 @@ libglade_hdy_deps = [
 libglade_hdy_args = []
 # Our custom glade module
 libglade_hdy = shared_library(
-  'glade-handy',
+  'glade-handy-' + apiversion,
   libglade_hdy_sources,
                c_args: libglade_hdy_args,
          dependencies: libglade_hdy_deps,
   include_directories: [ root_inc, src_inc ],
-              install: installable,
+              install: true,
           install_dir: module_dir,
 )
 
@@ -52,9 +50,10 @@ if xmllint.found()
   )
 endif
 
-if installable
-  # Install glade catalog
-  install_data(glade_xml, install_dir: glade_catalogdir)
-endif
+# Install glade catalog
+install_data(
+  glade_xml,
+       rename: 'libhandy-@0@.xml'.format(apiversion),
+  install_dir: glade_catalogdir)
 
 endif

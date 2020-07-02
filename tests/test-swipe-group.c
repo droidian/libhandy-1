@@ -16,8 +16,8 @@ test_hdy_swipe_group_add_remove (void)
 
   group = hdy_swipe_group_new ();
 
-  swipeable1 = HDY_SWIPEABLE (hdy_paginator_new ());
-  swipeable2 = HDY_SWIPEABLE (hdy_paginator_new ());
+  swipeable1 = HDY_SWIPEABLE (hdy_carousel_new ());
+  swipeable2 = HDY_SWIPEABLE (hdy_carousel_new ());
 
   g_assert_cmpint (g_slist_length (hdy_swipe_group_get_swipeables (group)), ==, 0);
 
@@ -39,7 +39,7 @@ main (gint argc,
       gchar *argv[])
 {
   gtk_test_init (&argc, &argv, NULL);
-  hdy_init (&argc, &argv);
+  hdy_init ();
 
   g_test_add_func("/Handy/SwipeGroup/add_remove", test_hdy_swipe_group_add_remove);
   return g_test_run();

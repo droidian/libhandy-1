@@ -7,23 +7,22 @@ private_headers = [
     'gtkprogresstrackerprivate.h',
     'gtk-window-private.h',
     'hdy-animation-private.h',
+    'hdy-carousel-box-private.h',
     'hdy-main-private.h',
+    'hdy-nothing-private.h',
     'hdy-keypad-button-private.h',
-    'hdy-paginator-box-private.h',
     'hdy-preferences-group-private.h',
     'hdy-preferences-page-private.h',
     'hdy-shadow-helper-private.h',
-    'hdy-style-private.h',
+    'hdy-stackable-box-private.h',
     'hdy-swipe-tracker-private.h',
-    'hdy-swipeable-private.h',
     'hdy-view-switcher-button-private.h',
+    'hdy-window-handle-controller-private.h',
+    'hdy-window-mixin-private.h',
 ]
 
 images = [
-  'images/arrows.png',
-  'images/dialer.png',
-  'images/dialog-desktop.png',
-  'images/dialog-mobile.png',
+  'images/avatar.png',
   'images/header-bar.png',
   'images/keypad.png',
   'images/list.png',
@@ -35,6 +34,7 @@ images = [
 
 content_files = [
   'build-howto.xml',
+  'hdy-migrating-0-0-to-1.xml',
   'visual-index.xml',
 ]
 
@@ -61,10 +61,11 @@ gnome.gtkdoc('libhandy',
                        '--extra-dir=@0@'.format(glib_docpath / 'gio'),
                        '--extra-dir=@0@'.format(glib_docpath / 'gi'),
                        '--extra-dir=@0@'.format(glib_docpath / 'gtk3'),
+                       '--extra-dir=@0@'.format(glib_docpath / 'gdk-pixbuf'),
                      ],
-        install_dir: 'libhandy',
+        install_dir: 'libhandy-' + apiversion,
       content_files: content_files,
         html_assets: images,
-            install: installable)
+            install: true)
 
 endif

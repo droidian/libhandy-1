@@ -7,8 +7,8 @@
 #include "config.h"
 #include <glib/gi18n-lib.h>
 
+#include "hdy-cairo-private.h"
 #include "hdy-shadow-helper-private.h"
-#include "hdy-style-private.h"
 
 #include <math.h>
 
@@ -29,16 +29,16 @@ struct _HdyShadowHelper
   GObject parent_instance;
 
   GtkWidget *widget;
-  gchar *css_path;
-  GtkCssProvider *provider;
 
   gboolean is_cache_valid;
 
   cairo_pattern_t *dimming_pattern;
   cairo_pattern_t *shadow_pattern;
   cairo_pattern_t *border_pattern;
+  cairo_pattern_t *outline_pattern;
   gint shadow_size;
   gint border_size;
+  gint outline_size;
 
   GtkPanDirection last_direction;
   gint last_width;
@@ -51,7 +51,6 @@ G_DEFINE_TYPE (HdyShadowHelper, hdy_shadow_helper, G_TYPE_OBJECT);
 enum {
   PROP_0,
   PROP_WIDGET,
-  PROP_CSS_PATH,
   LAST_PROP,
 };
 
@@ -81,12 +80,6 @@ create_context (HdyShadowHelper *self,
 
   context = gtk_style_context_new ();
   gtk_style_context_set_path (context, path);
-  gtk_style_context_set_parent (context,
-                                gtk_widget_get_style_context (self->widget));
-
-  gtk_style_context_add_provider (context,
-                                  GTK_STYLE_PROVIDER (self->provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
 
   g_type_class_unref (enum_class);
 
@@ -124,19 +117,15 @@ create_element_pattern (GtkStyleContext *context,
                         gint             width,
                         gint             height)
 {
-  cairo_surface_t *surface;
-  cairo_t *cr;
+  g_autoptr (cairo_surface_t) surface =
+    cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
+  g_autoptr (cairo_t) cr = cairo_create (surface);
   cairo_pattern_t *pattern;
-
-  surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, width, height);
-  cr = cairo_create (surface);
 
   gtk_render_background (context, cr, 0, 0, width, height);
   gtk_render_frame (context, cr, 0, 0, width, height);
 
   pattern = cairo_pattern_create_for_surface (surface);
-  cairo_destroy (cr);
-  cairo_surface_destroy (surface);
 
   return pattern;
 }
@@ -150,7 +139,8 @@ cache_shadow (HdyShadowHelper *self,
   g_autoptr(GtkStyleContext) dim_context = NULL;
   g_autoptr(GtkStyleContext) shadow_context = NULL;
   g_autoptr(GtkStyleContext) border_context = NULL;
-  gint shadow_size, border_size, scale;
+  g_autoptr(GtkStyleContext) outline_context = NULL;
+  gint shadow_size, border_size, outline_size, scale;
 
   scale = gtk_widget_get_scale_factor (self->widget);
 
@@ -166,39 +156,32 @@ cache_shadow (HdyShadowHelper *self,
   dim_context = create_context (self, "dimming", direction);
   shadow_context = create_context (self, "shadow", direction);
   border_context = create_context (self, "border", direction);
+  outline_context = create_context (self, "outline", direction);
 
   shadow_size = get_element_size (shadow_context, direction);
   border_size = get_element_size (border_context, direction);
+  outline_size = get_element_size (outline_context, direction);
 
   self->dimming_pattern = create_element_pattern (dim_context, width, height);
   if (direction == GTK_PAN_DIRECTION_LEFT || direction == GTK_PAN_DIRECTION_RIGHT) {
     self->shadow_pattern = create_element_pattern (shadow_context, shadow_size, height);
     self->border_pattern = create_element_pattern (border_context, border_size, height);
+    self->outline_pattern = create_element_pattern (outline_context, outline_size, height);
   } else {
     self->shadow_pattern = create_element_pattern (shadow_context, width, shadow_size);
     self->border_pattern = create_element_pattern (border_context, width, border_size);
+    self->outline_pattern = create_element_pattern (outline_context, width, outline_size);
   }
 
   self->border_size = border_size;
   self->shadow_size = shadow_size;
+  self->outline_size = outline_size;
 
   self->is_cache_valid = TRUE;
   self->last_direction = direction;
   self->last_width = width;
   self->last_height = height;
   self->last_scale = scale;
-}
-
-static void
-hdy_shadow_helper_constructed (GObject *object)
-{
-  HdyShadowHelper *self = HDY_SHADOW_HELPER (object);
-
-  self->provider = gtk_css_provider_new ();
-  gtk_css_provider_load_from_resource (self->provider,
-                                       "/sm/puri/handy/style/hdy-leaflet.css");
-
-  G_OBJECT_CLASS (hdy_shadow_helper_parent_class)->constructed (object);
 }
 
 static void
@@ -213,17 +196,6 @@ hdy_shadow_helper_dispose (GObject *object)
 
   G_OBJECT_CLASS (hdy_shadow_helper_parent_class)->dispose (object);
 }
-static void
-hdy_shadow_helper_finalize (GObject *object)
-{
-  HdyShadowHelper *self = HDY_SHADOW_HELPER (object);
-
-  if (self->css_path)
-    g_free (self->css_path);
-  g_object_unref (self->provider);
-
-  G_OBJECT_CLASS (hdy_shadow_helper_parent_class)->finalize (object);
-}
 
 static void
 hdy_shadow_helper_get_property (GObject    *object,
@@ -236,10 +208,6 @@ hdy_shadow_helper_get_property (GObject    *object,
   switch (prop_id) {
   case PROP_WIDGET:
     g_value_set_object (value, self->widget);
-    break;
-
-  case PROP_CSS_PATH:
-    g_value_set_string (value, self->css_path);
     break;
 
   default:
@@ -260,12 +228,6 @@ hdy_shadow_helper_set_property (GObject      *object,
     self->widget = GTK_WIDGET (g_object_ref (g_value_get_object (value)));
     break;
 
-  case PROP_CSS_PATH:
-    if (self->css_path)
-      g_clear_pointer (&self->css_path, g_free);
-    self->css_path = g_strdup (g_value_get_string (value));
-    break;
-
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
   }
@@ -276,9 +238,7 @@ hdy_shadow_helper_class_init (HdyShadowHelperClass *klass)
 {
   GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
-  object_class->constructed = hdy_shadow_helper_constructed;
   object_class->dispose = hdy_shadow_helper_dispose;
-  object_class->finalize = hdy_shadow_helper_finalize;
   object_class->get_property = hdy_shadow_helper_get_property;
   object_class->set_property = hdy_shadow_helper_set_property;
 
@@ -294,20 +254,6 @@ hdy_shadow_helper_class_init (HdyShadowHelperClass *klass)
                          _("Widget"),
                          _("The widget the shadow will be drawn for"),
                          GTK_TYPE_WIDGET,
-                         G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
-
-  /**
-   * HdyShadowHelper:css-path:
-   *
-   * The CSS resource path to be used for the shadow. Must not be %NULL.
-   *
-   * Since: 0.0.11
-   */
-  props[PROP_CSS_PATH] =
-    g_param_spec_string ("css-path",
-                         _("CSS Path"),
-                         _("The CSS resource path to be used for the shadow"),
-                         NULL,
                          G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
@@ -328,12 +274,10 @@ hdy_shadow_helper_init (HdyShadowHelper *self)
  * Since: 0.0.12
  */
 HdyShadowHelper *
-hdy_shadow_helper_new (GtkWidget   *widget,
-                       const gchar *css_path)
+hdy_shadow_helper_new (GtkWidget *widget)
 {
   return g_object_new (HDY_TYPE_SHADOW_HELPER,
                        "widget", widget,
-                       "css-path", css_path,
                        NULL);
 }
 
@@ -354,8 +298,10 @@ hdy_shadow_helper_clear_cache (HdyShadowHelper *self)
   cairo_pattern_destroy (self->dimming_pattern);
   cairo_pattern_destroy (self->shadow_pattern);
   cairo_pattern_destroy (self->border_pattern);
+  cairo_pattern_destroy (self->outline_pattern);
   self->border_size = 0;
   self->shadow_size = 0;
+  self->outline_size = 0;
 
   self->last_direction = 0;
   self->last_width = 0;
@@ -388,12 +334,16 @@ hdy_shadow_helper_draw_shadow (HdyShadowHelper *self,
                                GtkPanDirection  direction)
 {
   gdouble remaining_distance, shadow_opacity;
-  gint shadow_size, border_size, distance;
+  gint shadow_size, border_size, outline_size, distance;
+
+  if (progress <= 0 || progress >= 1)
+    return;
 
   cache_shadow (self, width, height, direction);
 
   shadow_size = self->shadow_size;
   border_size = self->border_size;
+  outline_size = self->outline_size;
 
   switch (direction) {
   case GTK_PAN_DIRECTION_LEFT:
@@ -415,11 +365,27 @@ hdy_shadow_helper_draw_shadow (HdyShadowHelper *self,
 
   cairo_save (cr);
 
-  cairo_save (cr);
-  cairo_set_operator (cr, CAIRO_OPERATOR_ATOP);
+  switch (direction) {
+  case GTK_PAN_DIRECTION_LEFT:
+    cairo_rectangle (cr, -outline_size, 0, width + outline_size, height);
+    break;
+  case GTK_PAN_DIRECTION_RIGHT:
+    cairo_rectangle (cr, 0, 0, width + outline_size, height);
+    break;
+  case GTK_PAN_DIRECTION_UP:
+    cairo_rectangle (cr, 0, -outline_size, width, height + outline_size);
+    break;
+  case GTK_PAN_DIRECTION_DOWN:
+    cairo_rectangle (cr, 0, 0, width, height + outline_size);
+    break;
+  default:
+    g_assert_not_reached ();
+  }
+  cairo_clip (cr);
+  gdk_window_mark_paint_from_clip (gtk_widget_get_window (self->widget), cr);
+
   cairo_set_source (cr, self->dimming_pattern);
   cairo_paint_with_alpha (cr, 1 - progress);
-  cairo_restore (cr);
 
   switch (direction) {
   case GTK_PAN_DIRECTION_RIGHT:
@@ -435,11 +401,8 @@ hdy_shadow_helper_draw_shadow (HdyShadowHelper *self,
     g_assert_not_reached ();
   }
 
-  cairo_save (cr);
-  cairo_set_operator (cr, CAIRO_OPERATOR_ATOP);
   cairo_set_source (cr, self->shadow_pattern);
   cairo_paint_with_alpha (cr, shadow_opacity);
-  cairo_restore (cr);
 
   switch (direction) {
   case GTK_PAN_DIRECTION_RIGHT:
@@ -455,11 +418,28 @@ hdy_shadow_helper_draw_shadow (HdyShadowHelper *self,
     g_assert_not_reached ();
   }
 
-  cairo_save (cr);
-  cairo_set_operator (cr, CAIRO_OPERATOR_ATOP);
   cairo_set_source (cr, self->border_pattern);
   cairo_paint (cr);
-  cairo_restore (cr);
+
+  switch (direction) {
+  case GTK_PAN_DIRECTION_RIGHT:
+    cairo_translate (cr, border_size, 0);
+    break;
+  case GTK_PAN_DIRECTION_DOWN:
+    cairo_translate (cr, 0, border_size);
+    break;
+  case GTK_PAN_DIRECTION_LEFT:
+    cairo_translate (cr, -outline_size, 0);
+    break;
+  case GTK_PAN_DIRECTION_UP:
+    cairo_translate (cr, 0, -outline_size);
+    break;
+  default:
+    g_assert_not_reached ();
+  }
+
+  cairo_set_source (cr, self->outline_pattern);
+  cairo_paint (cr);
 
   cairo_restore (cr);
 }

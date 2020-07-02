@@ -9,11 +9,13 @@
  * Copyright (C) 2013 Tristan Van Berkom
  */
 
-#include "glade-hdy-swipe-group.h"
-
 #include <config.h>
 #include <glib/gi18n-lib.h>
+
+#include "glade-hdy-swipe-group.h"
+
 #include <gladeui/glade.h>
+#include "glade-hdy-utils.h"
 
 #define PROP_SWIPEABLES "swipeables"
 #define GLADE_TAG_SWIPEGROUP_SWIPEABLES "swipeables"
@@ -45,7 +47,7 @@ glade_hdy_swipe_group_read_widgets (GladeWidget  *widget,
         string = widget_name;
       } else if (widget_name != NULL) {
         tmp =
-          g_strdup_printf ("%s%s%s", string, GPC_OBJECT_DELIMITER,
+          g_strdup_printf ("%s%s%s", string, GLADE_PROPERTY_DEF_OBJECT_DELIMITER,
                            widget_name);
         string = (g_free (string), tmp);
         g_free (widget_name);

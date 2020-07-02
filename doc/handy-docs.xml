@@ -21,7 +21,7 @@
     </releaseinfo>
 
     <copyright>
-      <year>2017-2019</year>
+      <year>2017-2020</year>
       <holder>Purism SPC</holder>
     </copyright>
   </bookinfo>
@@ -37,20 +37,19 @@
     <title>Widgets and Objects</title>
     <xi:include href="xml/hdy-action-row.xml"/>
     <xi:include href="xml/hdy-animation.xml"/>
-    <xi:include href="xml/hdy-arrows.xml"/>
-    <xi:include href="xml/hdy-column.xml"/>
+    <xi:include href="xml/hdy-application-window.xml"/>
+    <xi:include href="xml/hdy-avatar.xml"/>
+    <xi:include href="xml/hdy-carousel.xml"/>
+    <xi:include href="xml/hdy-clamp.xml"/>
     <xi:include href="xml/hdy-combo-row.xml"/>
-    <xi:include href="xml/hdy-dialer.xml"/>
-    <xi:include href="xml/hdy-dialer-button.xml"/>
-    <xi:include href="xml/hdy-dialer-cycle-button.xml"/>
-    <xi:include href="xml/hdy-dialog.xml"/>
+    <xi:include href="xml/hdy-deck.xml"/>
     <xi:include href="xml/hdy-enum-value-object.xml"/>
     <xi:include href="xml/hdy-expander-row.xml"/>
     <xi:include href="xml/hdy-header-bar.xml"/>
     <xi:include href="xml/hdy-header-group.xml"/>
     <xi:include href="xml/hdy-keypad.xml"/>
     <xi:include href="xml/hdy-leaflet.xml"/>
-    <xi:include href="xml/hdy-paginator.xml"/>
+    <xi:include href="xml/hdy-navigation-direction.xml"/>
     <xi:include href="xml/hdy-preferences-group.xml"/>
     <xi:include href="xml/hdy-preferences-page.xml"/>
     <xi:include href="xml/hdy-preferences-row.xml"/>
@@ -59,19 +58,26 @@
     <xi:include href="xml/hdy-squeezer.xml"/>
     <xi:include href="xml/hdy-swipeable.xml"/>
     <xi:include href="xml/hdy-swipe-group.xml"/>
+    <xi:include href="xml/hdy-swipe-tracker.xml"/>
     <xi:include href="xml/hdy-title-bar.xml"/>
     <xi:include href="xml/hdy-value-object.xml"/>
     <xi:include href="xml/hdy-view-switcher.xml"/>
     <xi:include href="xml/hdy-view-switcher-bar.xml"/>
+    <xi:include href="xml/hdy-view-switcher-title.xml"/>
+    <xi:include href="xml/hdy-window.xml"/>
+    <xi:include href="xml/hdy-window-handle.xml"/>
   </chapter>
 
   <chapter id="helpers">
     <title>Helpers</title>
     <xi:include href="xml/hdy-version.xml"/>
     <xi:include href="xml/hdy-main.xml"/>
-    <xi:include href="xml/hdy-string-utf8.xml"/>
-    <xi:include href="xml/hdy-fold.xml"/>
-    <xi:include href="xml/hdy-list-box.xml"/>
+  </chapter>
+
+  <chapter id="migrating">
+    <title>Migrating from Previous Versions of Handy</title>
+
+    <xi:include href="hdy-migrating-0-0-to-1.xml"/>
   </chapter>
 
   <chapter id="object-tree">
@@ -117,6 +123,11 @@
   <index id="api-index-0-0-12" role="0.0.12">
     <title>Index of new symbols in 0.0.12</title>
     <xi:include href="xml/api-index-0.0.12.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <index id="api-index-1-0" role="1.0">
+    <title>Index of new symbols in 1.0</title>
+    <xi:include href="xml/api-index-1.0.xml"><xi:fallback /></xi:include>
   </index>
 
   <index id="annotations-glossary">

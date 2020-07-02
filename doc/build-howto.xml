@@ -145,7 +145,7 @@
     </para>
 
     <para>
-      You can also acknoledge this with the definition option of your C
+      You can also acknowledge this with the definition option of your C
       compiler, like <literal>-DHANDY_USE_UNSTABLE_API</literal>. This is
       required from Vala.
     </para>
@@ -156,7 +156,45 @@
       a two pass compilation and hence your Vala compiler outputs C (Meson,
       Automake, or using the <literal>--ccode</literal> Vala compiler option to
       trigger that) then you must add <literal>-DHANDY_USE_UNSTABLE_API
-      </literal> to your C compiler argments instead.
+      </literal> to your C compiler arguments instead.
     </para>
+  </refsect2>
+
+  <refsect2>
+    <title>Building on macOS</title>
+
+    <para>
+      To build on macOS you need to install the build-dependencies first. This can e.g. be done via <ulink url="https://brew.sh"><literal>brew</literal></ulink>:
+    </para>
+
+    <informalexample>
+      <programlisting>
+        brew install pkg-config gtk+3 adwaita-icon-theme meson glade gobject-introspection vala
+      </programlisting>
+    </informalexample>
+
+    <para>
+      After running the command above, one may now build the library:
+    </para>
+
+    <informalexample>
+      <programlisting>
+        git clone https://gitlab.gnome.org/GNOME/libhandy.git
+        cd libhandy
+        meson . _build
+        ninja -C _build test
+        ninja -C _build install
+      </programlisting>
+    </informalexample>
+
+    <para>
+      Working with the library on macOS is pretty much the same as on Linux. To link it, use <literal>pkg-config</literal>:
+    </para>
+
+    <informalexample>
+      <programlisting>
+        gcc $(pkg-config --cflags --libs gtk+-3.0) $(pkg-config --cflags --libs libhandy-1) main.c -o main
+      </programlisting>
+    </informalexample>
   </refsect2>
 </refentry>

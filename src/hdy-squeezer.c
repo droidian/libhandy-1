@@ -21,6 +21,7 @@
 
 #include "gtkprogresstrackerprivate.h"
 #include "hdy-animation-private.h"
+#include "hdy-cairo-private.h"
 
 /**
  * SECTION:hdy-squeezer
@@ -34,6 +35,10 @@
  *
  * Transitions between children can be animated as fades. This can be controlled
  * with hdy_squeezer_set_transition_type().
+ *
+ * # CSS nodes
+ *
+ * #HdySqueezer has a single CSS node with name squeezer.
  */
 
 /**
@@ -709,7 +714,6 @@ hdy_squeezer_draw (GtkWidget *widget,
 {
   HdySqueezer *self = HDY_SQUEEZER (widget);
   HdySqueezerPrivate *priv = hdy_squeezer_get_instance_private (self);
-  cairo_t *pattern_cr;
 
   if (gtk_cairo_should_draw_window (cr, priv->view_window)) {
     GtkStyleContext *context;
@@ -726,6 +730,8 @@ hdy_squeezer_draw (GtkWidget *widget,
     if (gtk_progress_tracker_get_state (&priv->tracker) != GTK_PROGRESS_STATE_AFTER) {
       if (priv->last_visible_surface == NULL &&
           priv->last_visible_child != NULL) {
+        g_autoptr (cairo_t) pattern_cr = NULL;
+
         gtk_widget_get_allocation (priv->last_visible_child->widget,
                                    &priv->last_visible_surface_allocation);
         priv->last_visible_surface =
@@ -738,7 +744,6 @@ hdy_squeezer_draw (GtkWidget *widget,
          * bin_window offset.
          */
         gtk_widget_draw (priv->last_visible_child->widget, pattern_cr);
-        cairo_destroy (pattern_cr);
       }
 
       cairo_rectangle (cr,
@@ -1137,7 +1142,7 @@ hdy_squeezer_class_init (HdySqueezerClass *klass)
 
   gtk_container_class_install_child_properties (container_class, LAST_CHILD_PROP, child_props);
 
-  gtk_widget_class_set_css_name (widget_class, "hdysqueezer");
+  gtk_widget_class_set_css_name (widget_class, "squeezer");
 }
 
 static void
@@ -1159,7 +1164,7 @@ hdy_squeezer_init (HdySqueezer *self)
  *
  * Returns: a new #HdySqueezer
  */
-HdySqueezer *
+GtkWidget *
 hdy_squeezer_new (void)
 {
   return g_object_new (HDY_TYPE_SQUEEZER, NULL);
@@ -1334,7 +1339,7 @@ hdy_squeezer_get_transition_running (HdySqueezer *self)
  * hdy_squeezer_get_interpolate_size:
  * @self: A #HdySqueezer
  *
- * Gets wether @self should interpolate its size on visible child change.
+ * Gets whether @self should interpolate its size on visible child change.
  *
  * See hdy_squeezer_set_interpolate_size().
  *

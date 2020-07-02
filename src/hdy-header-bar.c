@@ -25,8 +25,9 @@
 #include "hdy-header-bar.h"
 
 #include "hdy-animation-private.h"
-#include "hdy-dialog.h"
+#include "hdy-cairo-private.h"
 #include "hdy-enums.h"
+#include "hdy-window-handle-controller-private.h"
 #include "gtkprogresstrackerprivate.h"
 #include "gtk-window-private.h"
 
@@ -34,7 +35,7 @@
  * SECTION:hdy-header-bar
  * @short_description: A box with a centered child.
  * @Title: HdyHeaderBar
- * @See_also: #GtkHeaderBar, #HdyTitleBar, #HdyViewSwitcher, #HdyDialog
+ * @See_also: #GtkHeaderBar, #HdyApplicationWindow, #HdyTitleBar, #HdyViewSwitcher, #HdyWindow
  *
  * HdyHeaderBar is similar to #GtkHeaderBar but is designed to fix some of its
  * shortcomings for adaptive applications.
@@ -43,9 +44,19 @@
  * hence allowing it to fill up the whole height, which is e.g. needed for
  * #HdyViewSwitcher.
  *
- * When used in a #HdyDialog, HdyHeaderBar will replace its window decorations
- * by a back button allowing to close it. It doesn't have to be its direct child
- * and you can use any complex contraption you like as the dialog's titlebar.
+ * When used in a mobile dialog, HdyHeaderBar will replace its window
+ * decorations by a back button allowing to close it. It doesn't have to be its
+ * direct child and you can use any complex contraption you like as the dialog's
+ * titlebar.
+ *
+ * #HdyHeaderBar can be used in window's content area rather than titlebar, and
+ * will still be draggable and will handle right click, middle click and double
+ * click as expected from a titlebar. This is particularly useful with
+ * #HdyWindow or #HdyApplicationWindow.
+ *
+ * # CSS nodes
+ *
+ * #HdyHeaderBar has a single CSS node with name headerbar.
  */
 
 /**
@@ -97,6 +108,8 @@ typedef struct {
   gboolean is_mobile_window;
 
   gulong window_size_allocated_id;
+
+  HdyWindowHandleController *controller;
 } HdyHeaderBarPrivate;
 
 typedef struct _Child Child;
@@ -314,12 +327,10 @@ hdy_header_bar_update_window_icon (HdyHeaderBar *self,
     pixbuf = hdy_gtk_window_get_icon_for_size (window, scale * 20);
 
   if (pixbuf) {
-    cairo_surface_t *surface;
-
-    surface = gdk_cairo_surface_create_from_pixbuf (pixbuf, scale, gtk_widget_get_window (priv->titlebar_icon));
+    g_autoptr (cairo_surface_t) surface =
+      gdk_cairo_surface_create_from_pixbuf (pixbuf, scale, gtk_widget_get_window (priv->titlebar_icon));
 
     gtk_image_set_from_surface (GTK_IMAGE (priv->titlebar_icon), surface);
-    cairo_surface_destroy (surface);
     g_object_unref (pixbuf);
     gtk_widget_show (priv->titlebar_icon);
 
@@ -716,7 +727,7 @@ hdy_header_bar_get_size (GtkWidget      *widget,
   HdyHeaderBar *self = HDY_HEADER_BAR (widget);
   HdyHeaderBarPrivate *priv = hdy_header_bar_get_instance_private (self);
   GList *l;
-  gint n_start_children = 0, n_end_children = 0, n_center_children = 0;
+  gint n_start_children = 0, n_end_children = 0;
   gint start_min = 0, start_nat = 0;
   gint end_min = 0, end_nat = 0;
   gint center_min = 0, center_nat = 0;
@@ -738,15 +749,10 @@ hdy_header_bar_get_size (GtkWidget      *widget,
       add_child_size (priv->label_box, orientation, &center_min, &center_nat);
     else
       add_child_size (priv->label_sizing_box, orientation, &center_min, &center_nat);
-
-    if (gtk_widget_get_visible (priv->label_sizing_box))
-      n_center_children += 1;
   }
 
-  if (priv->custom_title != NULL) {
-    if (add_child_size (priv->custom_title, orientation, &center_min, &center_nat))
-      n_center_children += 1;
-  }
+  if (priv->custom_title != NULL)
+    add_child_size (priv->custom_title, orientation, &center_min, &center_nat);
 
   if (priv->titlebar_start_box != NULL) {
     if (add_child_size (priv->titlebar_start_box, orientation, &start_min, &start_nat))
@@ -868,7 +874,6 @@ hdy_header_bar_compute_size_for_opposing_orientation (GtkWidget *widget,
   gint computed_natural = 0;
   GtkRequestedSize *sizes;
   GtkPackType packing;
-  gint size = 0;
   gint i;
   gint child_size;
   gint child_minimum;
@@ -891,14 +896,13 @@ hdy_header_bar_compute_size_for_opposing_orientation (GtkWidget *widget,
                                       &sizes[i].minimum_size,
                                       &sizes[i].natural_size);
 
-      size -= sizes[i].minimum_size;
       sizes[i].data = child;
       i += 1;
     }
   }
 
   /* Bring children up to size first */
-  size = gtk_distribute_natural_allocation (MAX (0, avail_size), nvis_children, sizes);
+  gtk_distribute_natural_allocation (MAX (0, avail_size), nvis_children, sizes);
 
   /* Allocate child positions. */
   for (packing = GTK_PACK_START; packing <= GTK_PACK_END; ++packing) {
@@ -926,7 +930,6 @@ hdy_header_bar_compute_size_for_opposing_orientation (GtkWidget *widget,
       computed_minimum = MAX (computed_minimum, child_minimum);
       computed_natural = MAX (computed_natural, child_natural);
     }
-    i += 1;
   }
 
   center_min = center_nat = 0;
@@ -971,13 +974,20 @@ hdy_header_bar_measure (GtkWidget      *widget,
   GtkStyleContext *style_context;
   GtkStateFlags state_flags;
   GtkBorder border, margin, padding;
+  gint css_width, css_height;
+
+  gtk_style_context_get (gtk_widget_get_style_context (widget),
+                         gtk_widget_get_state_flags (widget),
+                         "min-width", &css_width,
+                         "min-height", &css_height,
+                         NULL);
 
   if (for_size < 0)
     hdy_header_bar_get_size (widget, orientation, minimum, natural);
   else if (orientation == GTK_ORIENTATION_HORIZONTAL)
-    hdy_header_bar_compute_size_for_orientation (widget, for_size, minimum, natural);
+    hdy_header_bar_compute_size_for_orientation (widget, MAX (for_size, css_height), minimum, natural);
   else
-    hdy_header_bar_compute_size_for_opposing_orientation (widget, for_size, minimum, natural);
+    hdy_header_bar_compute_size_for_opposing_orientation (widget, MAX (for_size, css_width), minimum, natural);
 
   /* Manually apply the border, the padding and the margin as we can't use the
    * private GtkGagdet.
@@ -992,11 +1002,17 @@ hdy_header_bar_measure (GtkWidget      *widget,
                 border.bottom + margin.bottom + padding.bottom;
     *natural += border.top + margin.top + padding.top +
                 border.bottom + margin.bottom + padding.bottom;
+
+    *minimum = MAX (*minimum, css_height);
+    *natural = MAX (*natural, css_height);
   } else {
     *minimum += border.left + margin.left + padding.left +
                 border.right + margin.right + padding.right;
     *natural += border.left + margin.left + padding.left +
                 border.right + margin.right + padding.right;
+
+    *minimum = MAX (*minimum, css_width);
+    *natural = MAX (*natural, css_width);
   }
 }
 
@@ -1428,6 +1444,7 @@ hdy_header_bar_size_allocate (GtkWidget     *widget,
   HdyHeaderBarPrivate *priv = hdy_header_bar_get_instance_private (self);
   GtkAllocation *allocations;
   GtkAllocation title_allocation;
+  GtkAllocation clip;
   gint nvis_children;
   GList *l;
   gint i;
@@ -1440,7 +1457,21 @@ hdy_header_bar_size_allocate (GtkWidget     *widget,
   GtkWidget *decoration_box[2] = { priv->titlebar_start_box, priv->titlebar_end_box };
   gint decoration_width[2] = { 0 };
 
+  gtk_render_background_get_clip (gtk_widget_get_style_context (widget),
+                                  allocation->x,
+                                  allocation->y,
+                                  allocation->width,
+                                  allocation->height,
+                                  &clip);
+
   gtk_widget_set_allocation (widget, allocation);
+
+  if (gtk_widget_get_realized (widget))
+    gdk_window_move_resize (gtk_widget_get_window (widget),
+                            allocation->x,
+                            allocation->y,
+                            allocation->width,
+                            allocation->height);
 
   /* Manually apply the border, the padding and the margin as we can't use the
    * private GtkGagdet.
@@ -1456,8 +1487,8 @@ hdy_header_bar_size_allocate (GtkWidget     *widget,
   allocation->height -= border.top + border.bottom +
                         margin.top + margin.bottom +
                         padding.top + padding.bottom;
-  allocation->x += border.left + margin.left + padding.left;
-  allocation->y += border.top + margin.top + padding.top;
+  allocation->x = border.left + margin.left + padding.left;
+  allocation->y = border.top + margin.top + padding.top;
 
   direction = gtk_widget_get_direction (widget);
   nvis_children = count_visible_children (self);
@@ -1547,6 +1578,8 @@ hdy_header_bar_size_allocate (GtkWidget     *widget,
     gtk_widget_size_allocate (priv->custom_title, &title_allocation);
   else if (priv->label_box != NULL)
     gtk_widget_size_allocate (priv->label_box, &title_allocation);
+
+  gtk_widget_set_clip (widget, &clip);
 }
 
 static void
@@ -1592,6 +1625,7 @@ hdy_header_bar_finalize (GObject *object)
   g_clear_pointer (&priv->title, g_free);
   g_clear_pointer (&priv->subtitle, g_free);
   g_clear_pointer (&priv->decoration_layout, g_free);
+  g_clear_object (&priv->controller);
 
   G_OBJECT_CLASS (hdy_header_bar_parent_class)->finalize (object);
 }
@@ -1941,7 +1975,7 @@ hdy_header_bar_draw (GtkWidget *widget,
 
   context = gtk_widget_get_style_context (widget);
   /* GtkWidget draws nothing by default so we have to render the background
-   * explicitely for HdyHederBar to render the typical titlebar background.
+   * explicitly for HdyHederBar to render the typical titlebar background.
    */
   gtk_render_background (context,
                          cr,
@@ -1962,8 +1996,10 @@ static void
 hdy_header_bar_realize (GtkWidget *widget)
 {
   GtkSettings *settings;
-
-  GTK_WIDGET_CLASS (hdy_header_bar_parent_class)->realize (widget);
+  GtkAllocation allocation;
+  GdkWindowAttr attributes;
+  gint attributes_mask;
+  GdkWindow *window;
 
   settings = gtk_widget_get_settings (widget);
   g_signal_connect_swapped (settings, "notify::gtk-shell-shows-app-menu",
@@ -1972,6 +2008,25 @@ hdy_header_bar_realize (GtkWidget *widget)
                             G_CALLBACK (hdy_header_bar_update_window_buttons), widget);
   update_is_mobile_window (HDY_HEADER_BAR (widget));
   hdy_header_bar_update_window_buttons (HDY_HEADER_BAR (widget));
+
+  gtk_widget_get_allocation (widget, &allocation);
+  gtk_widget_set_realized (widget, TRUE);
+
+  attributes.x = allocation.x;
+  attributes.y = allocation.y;
+  attributes.width = allocation.width;
+  attributes.height = allocation.height;
+  attributes.window_type = GDK_WINDOW_CHILD;
+  attributes.event_mask = gtk_widget_get_events (widget);
+  attributes.visual = gtk_widget_get_visual (widget);
+  attributes.wclass = GDK_INPUT_OUTPUT;
+  attributes_mask = GDK_WA_X | GDK_WA_Y | GDK_WA_VISUAL;
+
+  window = gdk_window_new (gtk_widget_get_parent_window (widget),
+                           &attributes,
+                           attributes_mask);
+  gtk_widget_set_window (widget, window);
+  gtk_widget_register_window (widget, window);
 }
 
 static void
@@ -2216,10 +2271,9 @@ static void
 hdy_header_bar_init (HdyHeaderBar *self)
 {
   HdyHeaderBarPrivate *priv;
+  GtkStyleContext *context;
 
   priv = hdy_header_bar_get_instance_private (self);
-
-  gtk_widget_set_has_window (GTK_WIDGET (self), FALSE);
 
   priv->title = NULL;
   priv->subtitle = NULL;
@@ -2234,6 +2288,11 @@ hdy_header_bar_init (HdyHeaderBar *self)
   init_sizing_box (self);
   construct_label_box (self);
 
+  priv->controller = hdy_window_handle_controller_new (GTK_WIDGET (self));
+
+  context = gtk_widget_get_style_context (GTK_WIDGET (self));
+  /* Ensure the widget has the titlebar style class. */
+  gtk_style_context_add_class (context, "titlebar");
 }
 
 static void
@@ -2365,7 +2424,7 @@ hdy_header_bar_get_title (HdyHeaderBar *self)
  * @subtitle: (allow-none): a subtitle, or %NULL
  *
  * Sets the subtitle of the #HdyHeaderBar. The title should give a user
- * an additional detail to help him identify the current view.
+ * an additional detail to help them identify the current view.
  *
  * Note that HdyHeaderBar by default reserves room for the subtitle,
  * even if none is currently set. If this is not desired, set the
@@ -2801,7 +2860,7 @@ hdy_header_bar_get_transition_running (HdyHeaderBar *self)
  * hdy_header_bar_get_interpolate_size:
  * @self: A #HdyHeaderBar
  *
- * Gets wether @self should interpolate its size on visible child change.
+ * Gets whether @self should interpolate its size on visible child change.
  *
  * See hdy_header_bar_set_interpolate_size().
  *

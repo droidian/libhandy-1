@@ -9,18 +9,59 @@
 #include <glib/gi18n-lib.h>
 
 #include "hdy-enums.h"
-#include "hdy-style-private.h"
 #include "hdy-view-switcher-bar.h"
 
 /**
  * SECTION:hdy-view-switcher-bar
- * @short_description: An view switcher action bar.
+ * @short_description: A view switcher action bar.
  * @title: HdyViewSwitcherBar
+ * @See_also: #HdyViewSwitcher, #HdyViewSwitcherTitle
  *
  * An action bar letting you switch between multiple views offered by a
  * #GtkStack, via an #HdyViewSwitcher. It is designed to be put at the bottom of
  * a window and to be revealed only on really narrow windows e.g. on mobile
- * phones.
+ * phones. It can't be revealed if there are less than two pages.
+ *
+ * You can conveniently bind the #HdyViewSwitcherBar:reveal property to
+ * #HdyViewSwitcherTitle:title-visible to automatically reveal the view switcher
+ * bar when the title label is displayed in place of the view switcher.
+ *
+ * An example of the UI definition for a common use case:
+ * |[
+ * <object class="GtkWindow"/>
+ *   <child type="titlebar">
+ *     <object class="HdyHeaderBar">
+ *       <property name="centering-policy">strict</property>
+ *       <child type="title">
+ *         <object class="HdyViewSwitcherTitle"
+ *                 id="view_switcher_title">
+ *           <property name="stack">stack</property>
+ *         </object>
+ *       </child>
+ *     </object>
+ *   </child>
+ *   <child>
+ *     <object class="GtkBox">
+ *       <child>
+ *         <object class="GtkStack" id="stack"/>
+ *       </child>
+ *       <child>
+ *         <object class="HdyViewSwitcherBar">
+ *           <property name="stack">stack</property>
+ *           <property name="reveal"
+ *                     bind-source="view_switcher_title"
+ *                     bind-property="title-visible"
+ *                     bind-flags="sync-create"/>
+ *         </object>
+ *       </child>
+ *     </object>
+ *   </child>
+ * </object>
+ * ]|
+ *
+ * # CSS nodes
+ *
+ * #HdyViewSwitcherBar has a single CSS node with name viewswitcherbar.
  *
  * Since: 0.0.10
  */
@@ -48,6 +89,25 @@ static GParamSpec *props[LAST_PROP];
 
 G_DEFINE_TYPE_WITH_CODE (HdyViewSwitcherBar, hdy_view_switcher_bar, GTK_TYPE_BIN,
                          G_ADD_PRIVATE (HdyViewSwitcherBar))
+
+static void
+count_children_cb (GtkWidget *widget,
+                   gint      *count)
+{
+  (*count)++;
+}
+
+static void
+update_bar_revealed (HdyViewSwitcherBar *self) {
+  HdyViewSwitcherBarPrivate *priv = hdy_view_switcher_bar_get_instance_private (self);
+  GtkStack *stack = hdy_view_switcher_get_stack (priv->view_switcher);
+  gint count = 0;
+
+  if (priv->reveal && stack)
+    gtk_container_foreach (GTK_CONTAINER (stack), (GtkCallback) count_children_cb, &count);
+
+  gtk_revealer_set_reveal_child (priv->revealer, count > 1);
+}
 
 static void
 hdy_view_switcher_bar_get_property (GObject    *object,
@@ -172,7 +232,7 @@ hdy_view_switcher_bar_class_init (HdyViewSwitcherBarClass *klass)
 
   g_object_class_install_properties (object_class, LAST_PROP, props);
 
-  gtk_widget_class_set_css_name (widget_class, "hdyviewswitcherbar");
+  gtk_widget_class_set_css_name (widget_class, "viewswitcherbar");
 
   gtk_widget_class_set_template_from_resource (widget_class,
                                                "/sm/puri/handy/ui/hdy-view-switcher-bar.ui");
@@ -184,8 +244,6 @@ static void
 hdy_view_switcher_bar_init (HdyViewSwitcherBar *self)
 {
   HdyViewSwitcherBarPrivate *priv;
-  g_autoptr (GtkCssProvider) provider = gtk_css_provider_new ();
-  GtkWidget *box;
 
   priv = hdy_view_switcher_bar_get_instance_private (self);
 
@@ -198,15 +256,8 @@ hdy_view_switcher_bar_init (HdyViewSwitcherBar *self)
   gtk_widget_init_template (GTK_WIDGET (self));
 
   priv->revealer = GTK_REVEALER (gtk_bin_get_child (GTK_BIN (priv->action_bar)));
-  g_object_bind_property (self, "reveal", priv->revealer, "reveal-child", G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
+  update_bar_revealed (self);
   gtk_revealer_set_transition_type (priv->revealer, GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
-
-  box = gtk_bin_get_child (GTK_BIN (priv->revealer));
-
-  gtk_css_provider_load_from_resource (provider, "/sm/puri/handy/style/hdy-view-switcher-bar-box.css");
-  gtk_style_context_add_provider (gtk_widget_get_style_context (box),
-                                  GTK_STYLE_PROVIDER (provider),
-                                  HDY_STYLE_PROVIDER_PRIORITY);
 }
 
 /**
@@ -218,7 +269,7 @@ hdy_view_switcher_bar_init (HdyViewSwitcherBar *self)
  *
  * Since: 0.0.10
  */
-HdyViewSwitcherBar *
+GtkWidget *
 hdy_view_switcher_bar_new (void)
 {
   return g_object_new (HDY_TYPE_VIEW_SWITCHER_BAR, NULL);
@@ -360,16 +411,28 @@ hdy_view_switcher_bar_set_stack (HdyViewSwitcherBar *self,
                                  GtkStack           *stack)
 {
   HdyViewSwitcherBarPrivate *priv;
+  GtkStack *previous_stack;
 
   g_return_if_fail (HDY_IS_VIEW_SWITCHER_BAR (self));
   g_return_if_fail (stack == NULL || GTK_IS_STACK (stack));
 
   priv = hdy_view_switcher_bar_get_instance_private (self);
+  previous_stack = hdy_view_switcher_get_stack (priv->view_switcher);
 
-  if (hdy_view_switcher_get_stack (priv->view_switcher) == stack)
+  if (previous_stack == stack)
     return;
 
+  if (previous_stack)
+    g_signal_handlers_disconnect_by_func (previous_stack, G_CALLBACK (update_bar_revealed), self);
+
   hdy_view_switcher_set_stack (priv->view_switcher, stack);
+
+  if (stack) {
+    g_signal_connect_swapped (stack, "add", G_CALLBACK (update_bar_revealed), self);
+    g_signal_connect_swapped (stack, "remove", G_CALLBACK (update_bar_revealed), self);
+  }
+
+  update_bar_revealed (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_STACK]);
 }
@@ -421,6 +484,7 @@ hdy_view_switcher_bar_set_reveal (HdyViewSwitcherBar *self,
     return;
 
   priv->reveal = reveal;
+  update_bar_revealed (self);
 
   g_object_notify_by_pspec (G_OBJECT (self), props[PROP_REVEAL]);
 }

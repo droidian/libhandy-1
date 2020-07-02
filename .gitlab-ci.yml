@@ -1,18 +1,21 @@
+include:
+ - 'https://source.puri.sm/Librem5/librem5-ci/raw/master/librem5-pipeline-definitions.yml'
+ - 'https://gitlab.gnome.org/GNOME/citemplates/raw/master/flatpak/flatpak_ci_initiative.yml'
+
 stages:
   - build
-  - docs
-  - test
+  - test+docs
   - package
-  - deploy
+  - test-package
+  - publish
 
 before_script:
+  - echo "man-db man-db/auto-update boolean false" | debconf-set-selections
+  - export DEBIAN_FRONTEND=noninteractive
   - apt-get -y update
-  - apt-get -y install build-essential libgtk-3-doc lcov
-  - apt-get -y build-dep .
-
-.tags: &tags
-  tags:
-    - librem5
+  - apt-get -y install eatmydata
+  - eatmydata apt-get -y install build-essential libgtk-3-doc libgdk-pixbuf2.0-doc lcov
+  - eatmydata apt-get -y build-dep .
 
 .build: &build_steps
     echo "BUILD_OPTS=${BUILD_OPTS}" &&
@@ -20,9 +23,14 @@ before_script:
     meson ${BUILD_OPTS} . _build  &&
     ninja -C _build
 
+api-visibility:
+  stage: build
+  before_script: []
+  script:
+    - lint/api-visibility.sh
+
 build-debian-gcc:
   image: debian:buster
-  <<: *tags
   stage: build
   variables:
     BUILD_OPTS: -Dgtk_doc=true -Db_coverage=true --werror
@@ -33,22 +41,15 @@ build-debian-gcc:
     paths:
       - _build
 
-build-debian-gcc-static:
-  image: debian:buster
-  <<: *tags
-  stage: build
-  variables:
-    BUILD_OPTS: -Dintrospection=disabled -Dstatic=true -Dgtk_doc=false --werror
-  script:
-    - *build_steps
-
 build-debian-clang:
   image: debian:buster
   before_script:
+    - echo "man-db man-db/auto-update boolean false" | debconf-set-selections
+    - export DEBIAN_FRONTEND=noninteractive
     - apt-get -y update
-    - apt-get -y install build-essential clang-tools
-    - apt-get -y build-dep .
-  <<: *tags
+    - apt-get -y install eatmydata
+    - eatmydata apt-get -y install build-essential clang-tools
+    - eatmydata apt-get -y build-dep .
   stage: build
   script:
     - export LC_ALL=C.UTF-8
@@ -63,11 +64,10 @@ build-debian-clang:
       - _build/meson-logs/scanbuild
 
 build-fedora-gcc:
-  image: fedora:29
-  <<: *tags
+  image: fedora:32
   stage: build
   variables:
-    BUILD_OPTS: -Dgtk_doc=true --werror
+    BUILD_OPTS: -Dgtk_doc=true
   before_script:
     - dnf -y update
     - dnf -y install @development-tools redhat-rpm-config dnf-plugins-core
@@ -77,22 +77,21 @@ build-fedora-gcc:
 
 build-gtkdoc:
   image: debian:buster
-  <<: *tags
-  stage: docs
+  stage: test+docs
   dependencies:
     - build-debian-gcc
   script:
     - ninja -C _build meson-libhandy-doc 2>&1 | tee _build/doc/buildlog
     - if grep -qs 'warning' _build/doc/buildlog; then exit 1; fi
+    - mv _build/doc/html/ _reference/
   artifacts:
     when: always
     paths:
-      - _build/doc/html
+      - _reference
 
 unit-test:
   image: debian:buster
-  <<: *tags
-  stage: test
+  stage: test+docs
   dependencies:
     - build-debian-gcc
   script:
@@ -104,39 +103,53 @@ unit-test:
     paths:
       - _build
 
-package-debian:
-  image: debian:buster
-  <<: *tags
-  stage: package
-  script:
-    - dpkg-buildpackage -uc -us
-    - cp ../*.deb .
-  artifacts:
-    paths:
-      - "*.deb"
+package-debian-buster:
+  tags: []
+  extends: .l5-build-debian-package
 
-publish-docs:
-  stage: deploy
+autopkgtest-debian-buster-package:
+  tags: []
+  dependencies:
+    - package-debian-buster
+  extends: .l5-autopkgtest-debian-package
+
+lintian-debian-buster-package:
+  tags: []
+  dependencies:
+    - package-debian-buster
+  extends: .l5-lintian-debian-package
+
+build-flatpak:
+  extends: '.flatpak'
+  stage: build
+  before_script: []
+  variables:
+    MANIFEST_PATH: 'examples/sm.puri.Handy.Demo.json'
+    RUNTIME_REPO: 'https://nightly.gnome.org/gnome-nightly.flatpakrepo'
+    FLATPAK_MODULE: 'libhandy'
+    APP_ID: 'sm.puri.Handy.Demo'
+    BUNDLE: 'sm.puri.Handy.Demo.flatpak'
+
+build-flatpak-glade:
+  extends: '.flatpak'
+  stage: build
+  before_script: []
+  variables:
+    MANIFEST_PATH: 'glade/sm.puri.Handy.Glade.json'
+    RUNTIME_REPO: 'https://nightly.gnome.org/gnome-nightly.flatpakrepo'
+    FLATPAK_MODULE: 'libhandy'
+    APP_ID: 'sm.puri.Handy.Glade'
+    BUNDLE: 'sm.puri.Handy.Glade.flatpak'
+
+pages:
+  stage: publish
   dependencies:
     - build-gtkdoc
-  environment:
-    name: production
-    url: https://developer.puri.sm/projects/libhandy/
-  before_script:
-    - export DEBIAN_FRONTEND=noninteractive
-    - apt-get -y update
-    - apt-get -y install ssh rsync
-  tags:
-    - librem5
+  before_script: []
   script:
-    # Don't publish in forks
-    - '[ "$CI_PROJECT_NAMESPACE" == "Librem5" ] || exit 0'
-    - mkdir -p ~/.ssh/
-    - chmod 0700 ~/.ssh/
-    - echo "$SSH_HOST_KEY" > ~/.ssh/known_hosts
-    - touch ~/.ssh/id_rsa
-    - chmod 0600 ~/.ssh/id_rsa
-    - echo "$SSH_KEY" >> ~/.ssh/id_rsa
-    - rsync -av -i --stats -e "ssh -l $SSH_USER -i ~/.ssh/id_rsa -p $SSH_PORT" _build/doc/html/ "$RSYNC_TARGET"
+    - mv _reference/ public/
+  artifacts:
+    paths:
+      - public
   only:
     - master
