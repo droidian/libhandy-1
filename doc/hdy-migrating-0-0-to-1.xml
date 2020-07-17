@@ -99,6 +99,18 @@
     </refsect3>
 
     <refsect3>
+      <title>Adapt to derivability changes</title>
+      <para>
+        Some widgets are now final, if your code is deriving from them, use
+        composition instead.
+      </para>
+      <para>
+        Affected widgets:
+        #HdySqueezer, #HdyViewSwitcher, #HdyViewSwitcherBar
+      </para>
+    </refsect3>
+
+    <refsect3>
       <title>HdyFold has been removed</title>
       <para>
         #HdyFold has been removed. This affects the API of #HdyLeaflet, see the
@@ -126,6 +138,22 @@
         former by the later.
         Similarly, HdyPaginatorIndicatorStyle has been renamed
         HdyCarouselIndicatorStyle.
+      </para>
+    </refsect3>
+
+    <refsect3>
+      <title>Adapt to HdyHeaderGroup API changes</title>
+      <para>
+        The #HdyHeaderGroup object has been largely redesigned, most of its
+        methods changed, see its documentation to know more.
+      </para>
+      <para>
+        The child type is now #HdyHeaderGroupChild, which can represent either
+        a #GtkHeaderBar, a #HdyHeaderBar, or a #HdyHeaderGroup.
+      </para>
+      <para>
+        The “focus” property has been replaced by #HdyHeaderGroup:decorate-all,
+        which works quite differently.
       </para>
     </refsect3>
 
