@@ -1,3 +1,59 @@
+libhandy-1 (0.84.0-1) unstable; urgency=medium
+
+  [ Sebastien Bacher ]
+  * debian: Update autopkgtests.
+    This improves the autopkgtest to not use deprecated symbols,
+    do a runtime test and be more cross build friendly.
+    See https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=946676
+
+  [ Guido Günther ]
+  * debian: Package API version 1
+  * d/control: Switch maintainer to team address
+  * debian: Fix source package name.
+    Like gtk4 and gtk3 we want libhandy-0 and libhandy-1 be different
+    source packages so they can exist in parallel.
+
+  [ Adrien Plazas ]
+  * debian: Remove 0.0 symbols.
+    We don't need them anymore.
+  * debian: Don't use hdy_init() in build test programs.
+    It has been dropped, use other functions instead.
+  * debian: Add missing symbols.
+    Add missing hdy_navigation_direction_get_type and
+    hdy_navigation_direction_get_type symbols.
+  * debian: Add missing symbols.
+    Add missing symbols for HdyDeck and HdyStackableBox.
+  * debian: Use HdyKeypad in the Python GI test.
+    This stops using string utility functions we drop in the next commit.
+  * debian: Drop handy-1-examples's dep on libhandy-0.0-0.
+    It of course needs libhandy-1-0, which is automatically added.
+    Fixes https://source.puri.sm/Librem5/libhandy/issues/261
+  * debian: Bump the 0.9.90 symbols to 0.80.0.
+    They will actually be introduced in the 0.80.0 tag.
+  * debian: Update the symbols
+  * debian: Fail if introduced symbols are not listed.
+    This will help us properly maintain the symbols file.
+  * debian: Fix some symbol versions
+  * debian: Add missing symbols
+
+  [ Alexander Mikhaylenko ]
+  * debian: Update Glade module soname.
+
+  [ Arnaud Ferraris ]
+  * d/libhandy-1-0: install locales
+  * debian: remove remaining libhandy-0.0 packaging files
+  * d/control: bump Standards-Version and debhelper-compat
+  * d/gbp.conf: align with other DebianOnMobile projects
+    In order to keep consistency with other projects maintained by the
+    DebianOnMobile team, use the same branch names and drop extra options.
+  * d/control: add Rules-Requires-Root
+  * d/control: change VCS URLs to libhandy-1 repo
+  * d/symbols: add Build-Depends field
+  * debian: add watch file
+  * remove .gitattributes and files it points to
+
+ -- Arnaud Ferraris <arnaud.ferraris@gmail.com>  Fri, 17 Jul 2020 15:23:33 +0200
+
 libhandy (0.0.13-2) unstable; urgency=medium
 
   * [0fd724f] Disable atk during tests.
