@@ -2,7 +2,9 @@ Source: libhandy-1
 Section: libs
 Priority: optional
 Maintainer: DebianOnMobile Maintainers <debian-on-mobile-maintainers@alioth-lists.debian.net>
-Uploaders: Guido Günther <agx@sigxcpu.org>
+Uploaders:
+ Arnaud Ferraris <arnaud.ferraris@gmail.com>,
+ Guido Günther <agx@sigxcpu.org>,
 Build-Depends:
  debhelper-compat (= 13),
  dh-sequence-gir,
