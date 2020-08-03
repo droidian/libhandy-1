@@ -1,3 +1,13 @@
+libhandy-1 (0.85.0-1) unstable; urgency=medium
+
+  [ Guido Günther ]
+  * Add Arnaud to uploaders
+
+  [ Arnaud Ferraris ]
+  * New upstream release 0.85.0
+
+ -- Arnaud Ferraris <arnaud.ferraris@gmail.com>  Mon, 03 Aug 2020 12:56:10 +0200
+
 libhandy-1 (0.84.0-1) unstable; urgency=medium
 
   [ Sebastien Bacher ]
