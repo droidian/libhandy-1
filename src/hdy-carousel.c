@@ -385,8 +385,6 @@ draw_indicators_lines (GtkWidget      *widget,
   cairo_fill (cr);
 }
 
-#define LERP(a, b, t) ((a) + (((b) - (a)) * (t)))
-
 static void
 draw_indicators_dots (GtkWidget      *widget,
                       cairo_t        *cr,
@@ -441,8 +439,8 @@ draw_indicators_dots (GtkWidget      *widget,
     progress = CLAMP (current_position - position, 0, remaining_progress);
     remaining_progress -= progress;
 
-    radius = LERP (DOTS_RADIUS, DOTS_RADIUS_SELECTED, progress) * sizes[i];
-    opacity = LERP (DOTS_OPACITY, DOTS_OPACITY_SELECTED, progress) * sizes[i];
+    radius = hdy_lerp (DOTS_RADIUS, DOTS_RADIUS_SELECTED, progress) * sizes[i];
+    opacity = hdy_lerp (DOTS_OPACITY, DOTS_OPACITY_SELECTED, progress) * sizes[i];
 
     cairo_set_source_rgba (cr, color.red, color.green, color.blue,
                            color.alpha * opacity);
@@ -973,8 +971,8 @@ hdy_carousel_class_init (HdyCarouselClass *klass)
   /**
    * HdyCarousel:interactive:
    *
-   * Whether @self can be navigated. This can be used to temporarily disable
-   * a #HdyCarousel to only allow navigating it in a certain state.
+   * Whether the carousel can be navigated. This can be used to temporarily
+   * disable a #HdyCarousel to only allow navigating it in a certain state.
    *
    * Since: 1.0
    */

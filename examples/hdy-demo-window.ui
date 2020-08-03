@@ -126,7 +126,7 @@
             </child>
           </object>
           <packing>
-            <property name="allow-visible">False</property>
+            <property name="navigatable">False</property>
           </packing>
         </child>
         <child>
@@ -881,10 +881,10 @@
                                           <object class="HdyActionRow">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="title" translatable="yes">Show extra symbols</property>
-                                            <property name="activatable_widget">keypad_show_symbols</property>
+                                            <property name="title" translatable="yes">Show letters</property>
+                                            <property name="activatable_widget">keypad_letters_visible</property>
                                             <child>
-                                              <object class="GtkSwitch" id="keypad_show_symbols">
+                                              <object class="GtkSwitch" id="keypad_letters_visible">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
                                                 <property name="state">True</property>
@@ -897,12 +897,13 @@
                                           <object class="HdyActionRow">
                                             <property name="visible">True</property>
                                             <property name="can_focus">False</property>
-                                            <property name="title" translatable="yes">Show only digits</property>
-                                            <property name="activatable_widget">keypad_only_digits</property>
+                                            <property name="title" translatable="yes">Show symbols</property>
+                                            <property name="activatable_widget">keypad_symbols_visible</property>
                                             <child>
-                                              <object class="GtkSwitch" id="keypad_only_digits">
+                                              <object class="GtkSwitch" id="keypad_symbols_visible">
                                                 <property name="visible">True</property>
                                                 <property name="can_focus">True</property>
+                                                <property name="state">True</property>
                                                 <property name="valign">center</property>
                                               </object>
                                             </child>
@@ -922,11 +923,10 @@
                                         <property name="can_focus">False</property>
                                         <property name="column_spacing">10</property>
                                         <property name="row_spacing">8</property>
-                                        <property name="only_digits">FALSE</property>
                                         <property name="halign">center</property>
                                         <property name="entry">entry_keypad</property>
-                                        <property name="only-digits" bind-source="keypad_only_digits" bind-property="state" bind-flags="sync-create | bidirectional"/>
-                                        <property name="show-symbols" bind-source="keypad_show_symbols" bind-property="state" bind-flags="sync-create | bidirectional"/>
+                                        <property name="symbols-visible" bind-source="keypad_symbols_visible" bind-property="state" bind-flags="sync-create | bidirectional"/>
+                                        <property name="letters-visible" bind-source="keypad_letters_visible" bind-property="state" bind-flags="sync-create | bidirectional"/>
                                       </object>
                                       <packing>
                                         <property name="expand">False</property>
@@ -2028,6 +2028,129 @@
                                             <property name="valign">center</property>
                                             <property name="numeric">True</property>
                                             <property name="adjustment">avatar_adjustment</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkListBox">
+                                    <property name="visible">True</property>
+                                    <property name="can_focus">False</property>
+                                    <property name="expand">True</property>
+                                    <property name="selection-mode">none</property>
+                                    <style>
+                                      <class name="preferences"/>
+                                    </style>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar1">
+                                        <property name="title">Miriam Lepied</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar1" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar2">
+                                        <property name="title">Ilaria Franco</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar2" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar3">
+                                        <property name="title">Adrian Lopez</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar3" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar4">
+                                        <property name="title">Thibault Galinier</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar4" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar5">
+                                        <property name="title">Adam Mariotti</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar5" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar6">
+                                        <property name="title">Frédérique Zwickelman</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar6" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar7">
+                                        <property name="title">Peter Berat</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar7" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="HdyActionRow" id="avatar8">
+                                        <property name="title">Sarah Ferber</property>
+                                        <property name="visible">True</property>
+                                        <child type="prefix">
+                                          <object class="HdyAvatar">
+                                            <property name="show-initials">True</property>
+                                            <property name="size">48</property>
+                                            <property name="text" bind-source="avatar8" bind-property="title" bind-flags="sync-create"/>
+                                            <property name="visible">True</property>
                                           </object>
                                         </child>
                                       </object>

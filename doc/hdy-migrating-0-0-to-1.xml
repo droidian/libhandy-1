@@ -168,12 +168,20 @@
         of a #HdyFold.
       </para>
       <para>
+        On touchscreens, swiping forward with the “over” transition and swiping
+        back with the “under” transition can now only be done from the edge
+        where the upper child is.
+      </para>
+      <para>
         The “over” and “under” transitions can draw their shadow on top of the
         window's transparent areas, like the rounded corners.
         This is a side-effect of allowing shadows to be drawn on top of OpenGL
         areas.
         It can be mitigated by using #HdyWindow or #HdyApplicationWindow as they
         will crop anything drawn beyond the rounded corners.
+      </para>
+      <para>
+        The “allow-visible” child property has been renamed “navigatable”.
       </para>
     </refsect3>
 
@@ -285,6 +293,23 @@
       <para>
         #HdyKeypad doesn't subclass #Gtkgrid anymore. Instead, it subclasses
         #GtkBin and contains a grid.
+      </para>
+      <para>
+        The “show-symbols” property has been replaced by
+        #HdyHeaderGroup:letters-visible.
+      </para>
+      <para>
+        The “only-digits” property has been replaced by
+        #HdyHeaderGroup:symbols-visible, which has a inverse boolean meaning.
+        This also affects the corresponding parameter of the constructor.
+      </para>
+      <para>
+        The “left-action” property has been replaced by
+        #HdyHeaderGroup:start-action, and the “right-action” property has been
+        replaced by #HdyHeaderGroup:end-action.
+      </para>
+      <para>
+        The “entry” property isn't a #GtkWidget anymore but a #GtkEntry.
       </para>
     </refsect3>
 
