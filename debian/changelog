@@ -1,3 +1,11 @@
+libhandy-1 (0.90.0-1~1.gbp95aca6) UNRELEASED; urgency=medium
+
+  ** SNAPSHOT build @95aca62432268299fd786c751eccd29df4a7f00a **
+
+  * New upstream version 0.90.0
+
+ -- Guido Günther <agx@sigxcpu.org>  Tue, 11 Aug 2020 15:18:40 +0200
+
 libhandy-1 (0.85.0-1) unstable; urgency=medium
 
   [ Guido Günther ]
