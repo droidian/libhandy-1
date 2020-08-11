@@ -29,16 +29,13 @@ G_DECLARE_DERIVABLE_TYPE (HdyExpanderRow, hdy_expander_row, HDY, EXPANDER_ROW, H
 struct _HdyExpanderRowClass
 {
   HdyPreferencesRowClass parent_class;
+
+  /*< private >*/
+  gpointer padding[4];
 };
 
 HDY_AVAILABLE_IN_ALL
 GtkWidget   *hdy_expander_row_new (void);
-
-HDY_AVAILABLE_IN_ALL
-const gchar *hdy_expander_row_get_title (HdyExpanderRow *self);
-HDY_AVAILABLE_IN_ALL
-void         hdy_expander_row_set_title (HdyExpanderRow *self,
-                                         const gchar    *title);
 
 HDY_AVAILABLE_IN_ALL
 const gchar *hdy_expander_row_get_subtitle (HdyExpanderRow *self);

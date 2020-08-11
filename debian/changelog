@@ -1,3 +1,9 @@
+libhandy-1 (0.90.0-1) unstable; urgency=medium
+
+  * New upstream version 0.90.0
+
+ -- Guido Günther <agx@sigxcpu.org>  Tue, 11 Aug 2020 15:31:14 +0200
+
 libhandy-1 (0.85.0-1) unstable; urgency=medium
 
   [ Guido Günther ]
