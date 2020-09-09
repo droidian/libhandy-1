@@ -1,10 +1,8 @@
-libhandy-1 (1.0.0-1~1.gbp173dae) UNRELEASED; urgency=medium
-
-  ** SNAPSHOT build @173dae59f34fe6003918dc191d07865a27117721 **
+libhandy-1 (1.0.0-1) unstable; urgency=medium
 
   * New upstream version
 
- -- Guido Günther <agx@sigxcpu.org>  Wed, 09 Sep 2020 14:15:59 +0200
+ -- Guido Günther <agx@sigxcpu.org>  Wed, 09 Sep 2020 14:17:51 +0200
 
 libhandy-1 (0.90.0-1) unstable; urgency=medium
 
