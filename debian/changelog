@@ -1,3 +1,11 @@
+libhandy-1 (1.0.0-2) unstable; urgency=medium
+
+  * Rediff patches
+  * swipe-tracker: Special case dragging from buttons. Backport of upstream
+    commit 52eabe10f52a53794a90921baa78792f99c304a9.
+
+ -- Guido Günther <agx@sigxcpu.org>  Sat, 26 Sep 2020 11:19:44 +0200
+
 libhandy-1 (1.0.0-1) unstable; urgency=medium
 
   * New upstream version

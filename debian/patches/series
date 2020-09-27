@@ -1,1 +1,2 @@
 Disable-atk-during-tests.patch
+swipe-tracker-Special-case-dragging-from-buttons.patch
