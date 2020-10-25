@@ -1,2 +1,4 @@
 Disable-atk-during-tests.patch
 swipe-tracker-Special-case-dragging-from-buttons.patch
+carousel-box-Null-check-child-in-get_page_at_positio.patch
+carousel-box-Don-t-invalidate-cache-on-any-allocatio.patch
