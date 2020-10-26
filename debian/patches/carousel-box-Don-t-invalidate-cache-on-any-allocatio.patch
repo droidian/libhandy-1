@@ -1,0 +1,27 @@
+From bdfb9a99e20b5a3139f9828beb95266188af271f Mon Sep 17 00:00:00 2001
+From: Alexander Mikhaylenko <alexm@gnome.org>
+Date: Fri, 9 Oct 2020 13:13:23 +0500
+Subject: [PATCH 2/2] carousel-box: Don't invalidate cache on any allocation
+
+Welp.
+
+Fixes https://gitlab.gnome.org/GNOME/libhandy/-/issues/304
+---
+ src/hdy-carousel-box.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/hdy-carousel-box.c b/src/hdy-carousel-box.c
+index cf6e6eb..0c4c575 100644
+--- a/src/hdy-carousel-box.c
++++ b/src/hdy-carousel-box.c
+@@ -903,7 +903,6 @@ hdy_carousel_box_size_allocate (GtkWidget     *widget,
+     gtk_widget_size_allocate (child, &alloc);
+   }
+ 
+-  invalidate_drawing_cache (self);
+   gtk_widget_set_clip (widget, allocation);
+ }
+ 
+-- 
+2.29.1
+
