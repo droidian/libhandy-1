@@ -1,0 +1,26 @@
+From e731d452893cb58a50c219785ddf7bc8269cb20c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?X=E2=84=B9=20Ruoyao?= <xry111@mengyan1223.wang>
+Date: Sat, 31 Oct 2020 22:52:27 +0800
+Subject: [PATCH] combo-row: opacity should be a floating-point value
+
+Fixes e5f190e3.
+---
+ src/hdy-combo-row.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/hdy-combo-row.c b/src/hdy-combo-row.c
+index d60a7e7f..cd9405f5 100644
+--- a/src/hdy-combo-row.c
++++ b/src/hdy-combo-row.c
+@@ -137,7 +137,7 @@ create_list_widget (gpointer item,
+   GtkWidget *checkmark = g_object_new (GTK_TYPE_IMAGE,
+                                        "halign", GTK_ALIGN_START,
+                                        "icon-name", "emblem-ok-symbolic",
+-                                       "opacity", 0,
++                                       "opacity", 0.0,
+                                        "valign", GTK_ALIGN_CENTER,
+                                        "visible", TRUE,
+                                        NULL);
+-- 
+GitLab
+
