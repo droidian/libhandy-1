@@ -1,3 +1,10 @@
+libhandy-1 (1.0.2-1) unstable; urgency=medium
+
+  * New upstream version 1.0.2
+  * d/patches: drop upstreamed patch
+
+ -- Arnaud Ferraris <arnaud.ferraris@gmail.com>  Sat, 14 Nov 2020 12:39:56 +0100
+
 libhandy-1 (1.0.1-1) unstable; urgency=medium
 
   * New upstream version 1.0.1
